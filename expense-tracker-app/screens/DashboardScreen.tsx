@@ -68,7 +68,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ navigation }) 
 
   const handleLogout = () => {
     logout();
-    navigation.replace('Splash');
+    navigation.replace('splash');
   };
 
   const handleScroll = Animated.event(

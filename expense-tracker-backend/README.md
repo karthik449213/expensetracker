@@ -109,13 +109,14 @@ Authorization: Bearer <your_jwt_token>
 ```bash
 curl -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{
-    "username": "john_doe",
+  ' {"username": "john_doe",
     "email": "john@example.com",
     "password": "SecurePass123",
     "firstName": "John",
     "lastName": "Doe"
-  }'
+  }
+   
+  -d '
 ```
 
 ### 2. Login

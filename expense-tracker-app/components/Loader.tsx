@@ -1,9 +1,4 @@
-/**
- * Animated Loader Component
- * Terminal-style loading animation with blinking cursor
- */
-
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -26,10 +21,13 @@ export const Loader: React.FC<LoaderProps> = ({
 }) => {
   const cursorOpacity = useRef(new Animated.Value(1)).current;
   const dotAnim = useRef(new Animated.Value(0)).current;
+  const [dots, setDots] = useState(' ');
+  const cursorAnimRef = useRef<any>(null);
+  const dotAnimRef = useRef<any>(null);
 
   useEffect(() => {
     // Blinking cursor effect
-    Animated.loop(
+    cursorAnimRef.current = Animated.loop(
       Animated.sequence([
         Animated.timing(cursorOpacity, {
           toValue: 0,
@@ -42,10 +40,11 @@ export const Loader: React.FC<LoaderProps> = ({
           useNativeDriver: false,
         }),
       ])
-    ).start();
+    );
+    cursorAnimRef.current.start();
 
     // Animated dots effect
-    Animated.loop(
+    dotAnimRef.current = Animated.loop(
       Animated.sequence([
         Animated.timing(dotAnim, {
           toValue: 0,
@@ -63,7 +62,27 @@ export const Loader: React.FC<LoaderProps> = ({
           useNativeDriver: false,
         }),
       ])
-    ).start();
+    );
+    dotAnimRef.current.start();
+
+    // Listen to dotAnim changes and update dots display
+    const listener = dotAnim.addListener(({ value }) => {
+      if (value > 1.5) {
+        setDots('▌▌');
+      } else if (value > 0.5) {
+        setDots('▌');
+      } else {
+        setDots(' ');
+      }
+    });
+
+    return () => {
+      cursorAnimRef.current?.stop();
+      dotAnimRef.current?.stop();
+      dotAnim.removeListener(listener);
+      cursorOpacity.setValue(1);
+      dotAnim.setValue(0);
+    };
   }, [cursorOpacity, dotAnim]);
 
   const getSizeStyles = () => {
@@ -79,9 +98,10 @@ export const Loader: React.FC<LoaderProps> = ({
 
   const sizeStyles = getSizeStyles();
 
-  const dots = dotAnim.interpolate({
-    inputRange: [0, 1, 2],
-    outputRange: ['', '▌', '▌▌'],
+  // Use numeric interpolation for width (0-150 pixels)
+  const barWidth = dotAnim.interpolate({
+    inputRange: [0, 2],
+    outputRange: [0, 150],
   });
 
   return (
@@ -100,17 +120,14 @@ export const Loader: React.FC<LoaderProps> = ({
           style={[
             styles.barFill,
             {
-              width: dotAnim.interpolate({
-                inputRange: [0, 2],
-                outputRange: ['0%', '100%'],
-              }),
+              width: barWidth,
             },
           ]}
         />
       </View>
 
       <View style={styles.dotsContainer}>
-        <Animated.Text style={styles.dots}>{dots}</Animated.Text>
+        <Text style={styles.dots}>{dots}</Text>
         <Animated.Text
           style={[
             styles.cursor,

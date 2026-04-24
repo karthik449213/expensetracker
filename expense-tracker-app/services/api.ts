@@ -81,8 +81,11 @@ export interface ApiError {
 }
 
 // Create axios instance
+// Use 127.0.0.1 instead of localhost for Expo compatibility
+const API_BASE_URL = 'http://172.16.31.83:5000/api'; // Production (update with your production URL)
+
 const apiClient: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

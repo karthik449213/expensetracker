@@ -5,13 +5,13 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import {SplashScreen} from "@/screens/SplashScreen";
+import { SplashScreen } from './splash';
 import { ExpenseProvider } from '@/context/ExpenseContext';
 
 
 
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  initialRouteName: 'splash',
 };
 
 // 1. Rename this to "RootLayoutNav". This is the component that USES the auth data.
@@ -24,7 +24,7 @@ function RootLayoutNav() {
       <Stack>
         {/* Your logic remains exactly the same */}
         {isLoading ? (
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="splash" options={{ headerShown: false }} />
         ) : isSignedIn ? (
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         ) : (

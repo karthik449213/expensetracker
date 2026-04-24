@@ -38,14 +38,14 @@ export const ExpenseCard: React.FC<ExpenseCardProps> = ({
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
       setIsSwiped(false);
     } else {
       Animated.timing(slideAnim, {
         toValue: -140,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
       setIsSwiped(true);
     }

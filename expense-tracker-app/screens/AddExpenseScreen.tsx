@@ -112,13 +112,13 @@ export const AddExpenseScreen: React.FC<AddExpenseScreenProps> = ({ navigation }
         Animated.timing(successAnim, {
           toValue: 1,
           duration: 500,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(successAnim, {
           toValue: 0,
           duration: 500,
           delay: 1000,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]).start();
 
