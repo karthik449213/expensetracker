@@ -6,6 +6,8 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { expenseAPI, Expense, CreateExpensePayload, SummaryResponse } from '../services/api';
 import { AuthProvider,useAuth } from './AuthContext';
+import {cacheService} from '../services/cacheService';
+import {syncQueueService} from '../services/syncQueueService';
 
 interface ExpenseContextType {
   expenses: Expense[];
@@ -48,6 +50,13 @@ export const ExpenseProvider: React.FC<ExpenseProviderProps> = ({ children }) =>
       try {
         setIsLoading(true);
         setError(null);
+        //cache first then only fetch fresh data
+        const cachedExpenses =await cacheService.get<Expense[]>('expenses');
+        if(cachedExpenses){
+          setExpenses(cachedExpenses);
+        }
+
+        //fetching fresh data because may be cache is not present
         const response = await expenseAPI.getExpenses(category, startDate, endDate);
         
         if (response.success && response.data?.expenses) {
@@ -55,13 +64,26 @@ export const ExpenseProvider: React.FC<ExpenseProviderProps> = ({ children }) =>
         } else if (response.success && response.expenses) {
           setExpenses(response.expenses);
         }
+
+       //cache the result 
+       await cacheService.set('expenses',response.data?.expenses,30);
+       setError(null);
+
+
       } catch (err: any) {
         const errorMessage =
           err?.response?.data?.message ||
           err?.message ||
           'Failed to fetch expenses';
         setError(errorMessage);
-        console.error('Fetch expenses error:', err);
+           console.error('Fetch expenses error:', err);
+        //Return the cached data if available
+        const cached =await cacheService.get<Expense[]>('expenses');
+        if(cached){
+          setExpenses(cached);
+
+        }
+     
       } finally {
         setIsLoading(false);
       }

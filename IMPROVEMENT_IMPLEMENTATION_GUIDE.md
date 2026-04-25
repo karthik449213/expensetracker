@@ -425,7 +425,7 @@ class SyncQueueService {
     };
 
     this.queue.push(request);
-    await this.persistQueue();
+      await this.persistQueue();
 
     // Try to sync if connected
     const state = await NetInfo.fetch();

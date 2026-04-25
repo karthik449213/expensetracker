@@ -4,6 +4,7 @@ require('dotenv').config();
 
 // Middleware
 const errorMiddleware = require('./middleware/errorMiddleware');
+ const validationMiddleware=require('./middleware/validationMiddleware');
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
@@ -51,5 +52,5 @@ app.use((req, res, next) => {
  * Global Error Handler (must be last)
  */
 app.use(errorMiddleware);
-
+app.use(errorMiddleware);
 module.exports = app;

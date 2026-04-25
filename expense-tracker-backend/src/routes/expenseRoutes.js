@@ -7,6 +7,11 @@ const {
   deleteExpense,
   getExpenseSummary,
 } = require('../controllers/expenseController');
+const {
+    validateCreateExpense,
+  handleValidationErrors,
+} =require('../middleware/validationMiddleware');
+
 const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -28,7 +33,7 @@ router.get('/summary/dashboard', getExpenseSummary);
  * @access  Private
  * @body    { amount, category, date, note, paymentMethod, isRecurring }
  */
-router.post('/', createExpense);
+router.post('/',validateCreateExpense,handleValidationErrors, createExpense);
 
 /**
  * @route   GET /api/expenses
@@ -53,7 +58,7 @@ router.get('/:id', getExpenseById);
  * @param   { id }
  * @body    { amount, category, date, note, paymentMethod, isRecurring }
  */
-router.put('/:id', updateExpense);
+router.put('/:id',validateCreateExpense,handleValidationErrors, updateExpense);
 
 /**
  * @route   DELETE /api/expenses/:id
