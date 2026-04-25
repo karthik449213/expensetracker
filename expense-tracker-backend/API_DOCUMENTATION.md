@@ -161,7 +161,8 @@ Content-Type: application/json
   "date": "2024-04-23T12:30:00Z",
   "note": "Lunch at restaurant",
   "paymentMethod": "Card",
-  "isRecurring": false
+  "isRecurring": false,
+   "tags": ["business-trip", "client-meeting", "reimbursable"]
 }
 ```
 

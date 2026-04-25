@@ -20,6 +20,7 @@ interface GlowButtonProps {
   title: string;
   onPress: () => void;
   isLoading?: boolean;
+  label:string;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'sm' | 'md' | 'lg';

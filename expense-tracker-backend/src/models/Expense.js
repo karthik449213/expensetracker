@@ -15,6 +15,11 @@ const expenseSchema = new mongoose.Schema(
       required: [true, 'Amount is required'],
       min: [0, 'Amount cannot be negative'],
     },
+     tags: {
+    type: [String], // Array of strings
+    default: [],
+    index: true     // Essential for fast filtering!
+  },
     category: {
       type: String,
       required: [true, 'Category is required'],

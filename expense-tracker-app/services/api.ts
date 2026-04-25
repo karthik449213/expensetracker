@@ -82,7 +82,7 @@ export interface ApiError {
 
 // Create axios instance
 // Use 127.0.0.1 instead of localhost for Expo compatibility
-const API_BASE_URL = 'http://172.16.31.83:5000/api'; // Production (update with your production URL)
+const API_BASE_URL = 'http://172.16.31.82:5000/api'; // Production (update with your production URL)
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -111,14 +111,67 @@ apiClient.interceptors.request.use(
 );
 
 // Response interceptor for error handling
+let isRefreshing =false;
+let failedQueue:Array<{
+     onSucess: (token:string) =>void;
+    onFailed: (error : AxiosError)  =>void;
+   }> =[];
+   const processQueue =(error:AxiosError | null,token:string |null =null)=>{
+    failedQueue.forEach(prom=>{
+      if(error){
+        prom.onFailed(error);
+      }
+        else{
+          prom.onSucess(token!);
+
+        }
+      
+    });
+   }
 apiClient.interceptors.response.use(
   response => response,
   async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Token expired, clear storage
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('user');
+    const originalRequest = error.config as any;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((onSuccess, onFailed) => {
+          failedQueue.push({ onSuccess, onFailed });
+        }).then(token => {
+          originalRequest.headers['Authorization'] = `Bearer ${token}`;
+          return apiClient(originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = await AsyncStorage.getItem('refreshToken');
+        if (refreshToken) {
+          const { data } = await axios.post(
+            `${API_BASE_URL}/api/auth/refresh-token`,
+            { refreshToken }
+          );
+          
+          await AsyncStorage.setItem('authToken', data.token);
+          if (data.refreshToken) {
+            await AsyncStorage.setItem('refreshToken', data.refreshToken);
+          }
+
+          apiClient.defaults.headers['Authorization'] = `Bearer ${data.token}`;
+          originalRequest.headers['Authorization'] = `Bearer ${data.token}`;
+
+          processQueue(null, data.token);
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        processQueue(refreshError as AxiosError, null);
+        await AsyncStorage.removeItem('authToken');
+        await AsyncStorage.removeItem('refreshToken');
+      }
     }
+
     return Promise.reject(error);
   }
 );

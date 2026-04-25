@@ -6,7 +6,7 @@ const Expense = require('../models/Expense');
  */
 const createExpense = async (req, res, next) => {
   try {
-    const { amount, category, date, note, paymentMethod, isRecurring } = req.body;
+    const { amount, category, date, note, paymentMethod, isRecurring,tags } = req.body;
 
     // Validate required fields
     if (!amount || !category || !date) {
@@ -33,6 +33,7 @@ const createExpense = async (req, res, next) => {
       note,
       paymentMethod,
       isRecurring,
+      tags
     });
 
     await expense.save();
@@ -53,51 +54,68 @@ const createExpense = async (req, res, next) => {
  */
 const getExpenses = async (req, res, next) => {
   try {
-    const { category, startDate, endDate, page = 1, limit = 10 } = req.query;
+    let { category, startDate, endDate, minAmount, maxAmount, search, page = 1, limit = 10 ,tags} = req.query;
 
-    // Build filter query
     const filter = { userId: req.userId };
 
-    if (category) {
-      filter.category = category;
-    }
-
+    // 1. Better Date Handling
     if (startDate || endDate) {
       filter.date = {};
-      if (startDate) {
-        filter.date.$gte = new Date(startDate);
-      }
-      if (endDate) {
-        filter.date.$lte = new Date(endDate);
-      }
+      if (startDate) filter.date.$gte = new Date(startDate);
+      if (endDate) filter.date.$lte = new Date(endDate);
     }
 
-    // Calculate pagination
-    const pageNum = parseInt(page, 10);
-    const limitNum = parseInt(limit, 10);
-    const skip = (pageNum - 1) * limitNum;
+   if (tags) {
+  // Convert "tag1,tag2" string into an array if needed
+  const tagsArray = Array.isArray(tags) ? tags : tags.split(',');
+  
+  // Use $in to find any expense that contains at least one of these tags
+  filter.tags = { $in: tagsArray };
+  
+  // OPTIONAL: Use $all if the expense must have EVERY tag provided
+  // filter.tags = { $all: tagsArray };
+     }
+    // 2. Add Category & Amount Filters
+    if (category) filter.category = category;
+    if (minAmount || maxAmount) {
+      filter.amount = {};
+      if (minAmount) filter.amount.$gte = Number(minAmount);
+      if (maxAmount) filter.amount.$lte = Number(maxAmount);
+    }
 
-    // Get total count for pagination
-    const total = await Expense.countDocuments(filter);
+    // 3. Simple Text Search
+    if (search) {
+      filter.description = { $regex: search, $options: 'i' };
+    }
 
-    // Get expenses
-    const expenses = await Expense.find(filter)
-      .sort({ date: -1 })
-      .skip(skip)
-      .limit(limitNum);
+    // 4. Pagination Safety
+    const limitNum = Math.min(parseInt(limit) || 10, 100); // Cap at 100
+    const skip = (Math.max(parseInt(page) || 1, 1) - 1) * limitNum;
+
+    // 5. Parallel Execution & Lean
+    const [total, expenses] = await Promise.all([
+      Expense.countDocuments(filter),
+      Expense.find(filter)
+        .sort({ date: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean() 
+    ]);
 
     res.status(200).json({
       success: true,
-      total,
-      page: pageNum,
-      limit: limitNum,
-      pages: Math.ceil(total / limitNum),
-      expenses,
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / limitNum),
+      },
+      data: expenses,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 /**
  * Get single expense by ID
@@ -135,7 +153,7 @@ const getExpenseById = async (req, res, next) => {
 const updateExpense = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { amount, category, date, note, paymentMethod, isRecurring } = req.body;
+    const { amount, category, date, note, paymentMethod, isRecurring, tags } = req.body;
 
     // Validate amount if provided
     if (amount !== undefined && (isNaN(amount) || amount <= 0)) {
@@ -155,6 +173,7 @@ const updateExpense = async (req, res, next) => {
         ...(note !== undefined && { note }),
         ...(paymentMethod && { paymentMethod }),
         ...(isRecurring !== undefined && { isRecurring }),
+        ...(tags !==undefined && {tags})
       },
       { new: true, runValidators: true }
     );
