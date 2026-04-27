@@ -4,6 +4,9 @@ const connectDB = require('./config/db');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 5000;
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 
 /**
  * Connect to database and start server

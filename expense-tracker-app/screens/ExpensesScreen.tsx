@@ -151,6 +151,13 @@ export const ExpensesScreen: React.FC<ExpensesScreenProps> = ({ navigation }) =>
           )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          onEndReachedThreshold={0.5}
+          onEndReached={() => {
+            // Load more expenses when reaching end if needed
+          }}
         />
       ) : (
         <View style={styles.emptyContainer}>

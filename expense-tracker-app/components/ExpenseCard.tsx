@@ -3,7 +3,7 @@
  * Displays individual expense items with swipe actions
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState,memo } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,12 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+
 } from 'react-native';
 import { Expense } from '../services/api';
 import { HackerTheme } from '../theme/colors';
 import { formatCurrency, formatDate } from '../utils/formatting';
+
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -23,7 +25,7 @@ interface ExpenseCardProps {
   onPress?: (expense: Expense) => void;
 }
 
-export const ExpenseCard: React.FC<ExpenseCardProps> = ({
+const ExpenseCardComponent: React.FC<ExpenseCardProps> = ({
   expense,
   onEdit,
   onDelete,
@@ -50,6 +52,9 @@ export const ExpenseCard: React.FC<ExpenseCardProps> = ({
       setIsSwiped(true);
     }
   };
+
+  
+
 
   const categoryColor = HackerTheme.categoryColors[expense.category as keyof typeof HackerTheme.categoryColors] || HackerTheme.colors.secondary;
 
@@ -233,5 +238,19 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
 });
+
+// Memoize to prevent unnecessary re-renders
+export const ExpenseCard = memo(
+  ExpenseCardComponent,
+  (prevProps, nextProps) => {
+    // Return true if props are equal (skip re-render), false if different (re-render)
+    return (
+      prevProps.expense._id === nextProps.expense._id &&
+      prevProps.onEdit === nextProps.onEdit &&
+      prevProps.onDelete === nextProps.onDelete &&
+      prevProps.onPress === nextProps.onPress
+    );
+  }
+);
 
 export default ExpenseCard;
